@@ -1,4 +1,5 @@
 const router = require("express").Router();
+const Post = require("../models/Post");
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
 
@@ -120,6 +121,58 @@ router.get("/", async (req, res) => {
     var users = await User.find({});
 
     res.json(users);
+  } catch (error) {
+    console.log(err);
+  }
+});
+
+//social Index : -
+//concept -
+//      each user will have a social Index which will be calculates on 4 factors (as of v6) Likes, Posts,followings and followers the points will be given on a sclae of 0-10
+//      and for the calaculation, -> the user with max score will be the upper limit and then other user's score will be calculated on that
+//      for eg. ScoreOfUsers = [3,4,5] so upper limit is 5 and hence the social index will be 3/5*10 , 4/5*10 and 5/5*10 -  Index = [6,8,10]
+
+router.post("/Indexvalue/stats", async (req, res) => {
+  try {
+    var currentuserId = req.body._id;
+    var indexValue = 0;
+    var users = await User.find({});
+    var posts = await Post.find({});
+
+    let userScores = users.map((user) => {
+      const Posts = posts.filter((e) => e.userId == user._id);
+      const noOfLikes = Posts.reduce((sum, post) => {
+        return sum + post.likes.length;
+      }, 0);
+      const noOfFollowings = user.followings.length;
+      const noOfFollowers = user.followers.length;
+      const noOfPosts = Posts.length;
+
+      indexValue =
+        noOfLikes * 3 +
+        noOfPosts * 1 +
+        noOfFollowings * 0.5 +
+        noOfFollowers * 3;
+
+      return { user: user.id, indexValue };
+    });
+
+    var maxScore = 0;
+    var currentUserScore = 0;
+
+    for (let value of userScores) {
+      if (value.indexValue > maxScore) {
+        maxScore = value.indexValue;
+      }
+
+      if (value.user === currentuserId) {
+        currentUserScore = value.indexValue;
+      }
+    }
+
+    var SocialIndex = (currentUserScore / maxScore) * 10;
+
+    res.send({ SocialIndex });
   } catch (error) {
     console.log(err);
   }
