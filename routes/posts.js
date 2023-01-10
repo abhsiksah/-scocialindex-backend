@@ -59,6 +59,35 @@ router.put("/:id/like", async (req, res) => {
     res.status(500).json(err);
   }
 });
+
+//add a comment for a post
+
+router.put("/:id/comment", async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (
+      !post.comments.some((e) => {
+        return e.commentid == req.body.commentid;
+      })
+    ) {
+      await post.updateOne({ $push: { comments: req.body } });
+      const updatedPost = await Post.findById(req.params.id);
+      res.status(200).send(updatedPost);
+    } else {
+      await post.updateOne({
+        $pull: { comments: { commentid: req.body.commentid } },
+      });
+      const updatedPost = await Post.findById(req.params.id);
+      res.status(200).send(updatedPost);
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err);
+  }
+});
+
+//delete a comment for a post
+
 //get a post
 
 router.get("/:id", async (req, res) => {
