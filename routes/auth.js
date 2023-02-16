@@ -33,6 +33,35 @@ router.post("/register", async (req, res) => {
   }
 });
 
+//Google Register
+router.post("/glogin", async (req, res) => {
+  try {
+    //no need to check as it will be taken care by google API
+
+    const duplicateuser = await User.findOne({ email: req.body.email });
+
+    if (duplicateuser) {
+      res.status(200).json(duplicateuser);
+    } else {
+      const newUser = new User({
+        username: req.body.username,
+        email: req.body.email,
+        password: req.body.password,
+        profilePicture: req.body.profilePicture,
+        coverPicture: req.body.coverPicture,
+        isAdmin: req.body.isAdmin,
+      });
+
+      //save user and respond
+      const user = await newUser.save();
+      res.status(200).json(user);
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err);
+  }
+});
+
 //LOGIN
 router.post("/login", async (req, res) => {
   try {
